@@ -6,13 +6,7 @@ Rules for generating native Bazel Python libraries from requirements.txt
 * The script itself runs on Python3.5+
 * Only works with wheels right now
 
-## Design choices
-
-* Generated build files should follow Skylark style guide (https://docs.bazel.build/versions/master/skylark/bzl-style.html) as much as possible
-* Code should be Python3.5+ compatible
-* No external dependencies; this is a library for generating imports we don't to make it hard to use
-
-## Set up
+## Usage & Set up
 
 1. Add a `git_repository` rule to your WORKSPACE file to import the generator:
 
@@ -20,7 +14,7 @@ Rules for generating native Bazel Python libraries from requirements.txt
 git_repository(
     name = "rules_pygen",
     remote = "https://github.com/tubular/rules_pygen.git",
-    commit = "201b1529b2a1b689b8ddd29e95504605d956e070",
+    commit = "28835b7d278744916890f1ab3d974e7f5d75836c",
 )
 ```
 
@@ -68,8 +62,15 @@ py_library(
 ```
 
 
+## Development
 
-## Running tests (for this project)
+### Design choices
+
+* Generated build files should follow Skylark style guide (https://docs.bazel.build/versions/master/skylark/bzl-style.html) as much as possible
+* Code should be Python3.5+ compatible
+* No external dependencies; this is a library for generating imports we don't to make it hard to use
+
+### Running tests
 
 ```
 bazel run :generator_tests
