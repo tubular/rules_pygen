@@ -1,5 +1,17 @@
 # rules_pygen
-Rules for generating native Bazel Python libraries from requirements.txt
+Rules for generating native Bazel Python libraries from a requirements.txt file.
+
+Currently, using pip and a requirements.txt file is the standard for installing dependencies
+in a Python project. Unfortunately, Bazel doesn't understand requirements.txt files and only
+undestands the concept of a `py_library`; which is one or more Python source files. This library
+aims to bridge that gap. The rules_pygen generator takes a requirements.txt file as an input and
+generates a dependency graph of `py_library` rules based on the dependencies and subdependencies
+that pip would install given that requirements.txt file. In cases where a dependency is 
+platform-specific, this tool generates two variants, one for MacOS and another for Linux.
+
+The most common way to use this is in a monorepo where one requirements.txt defines all the 
+Python dependencies in your project, though you could potentially have more than one requirements
+file. 
 
 ## Limitations
 
