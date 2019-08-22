@@ -1,0 +1,15 @@
+# Load the generator, so it can be used locally
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+git_repository(
+    name = "rules_pygen",
+    remote = "https://github.com/tubular/rules_pygen.git",
+    commit = "201b1529b2a1b689b8ddd29e95504605d956e070"
+)
+
+# Common 3rdparty deps
+load(
+    "@//3rdparty/python:requirements.bzl",
+    default_pypi_deps = "pypi_archives",
+)
+
+default_pypi_deps()
