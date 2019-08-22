@@ -1,0 +1,6 @@
+asynctest==0.11.1
+coolname==1.1.0
+freezegun==0.3.8
+mock==2.0.0
+pytest==2.8.2
+testfixtures==4.3.3
