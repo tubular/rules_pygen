@@ -81,9 +81,9 @@ def requirement(name):
 # this matches *.whl files in log lines, note that PyPI can also contain
 # tar.gz files (not everything is a wheel) and so this script should deal
 # with those as well
-WHEEL_LINK_RE = re.compile(r'^\s*(Found|Skipping) link (?P<link>http[^ #]+\.whl)')
+WHEEL_LINK_RE = re.compile(r"^\s*(Found|Skipping) link (?P<link>http[^ #]+\.whl)")
 
-WHEEL_FILENAME_RE = re.compile(r'^.*/(?P<filename>[^\/]*.whl)$')
+WHEEL_FILENAME_RE = re.compile(r"^.*/(?P<filename>[^\/]*.whl)$")
 
 WHEEL_FILE_RE = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
@@ -103,13 +103,10 @@ ARCHIVE_TMPL = """
         )
 """
 
-BLACKLIST = {
-    'setuptools',
-    'typing',  # causes issues in python versions > 3.4
-}
+BLACKLIST = {"setuptools", "typing"}  # causes issues in python versions > 3.4
 
-SUPPORTED_PYTHON3_VERSIONS = ['py3', 'py2.py3', 'py34', 'py35', 'py36', 'py37', 'py38']
-CPYTHON_VERSIONS = ('cp34', 'cp35', 'cp36', 'cp37', 'cp38')
+SUPPORTED_PYTHON3_VERSIONS = ["py3", "py2.py3", "py34", "py35", "py36", "py37", "py38"]
+CPYTHON_VERSIONS = ("cp34", "cp35", "cp36", "cp37", "cp38")
 
 
 class PyBazelRuleGeneratorException(Exception):
@@ -117,16 +114,16 @@ class PyBazelRuleGeneratorException(Exception):
 
 
 def _space(x: int):
-    return ' ' * x
+    return " " * x
 
 
 def _download(url: str, dest: str) -> None:
-    logger.info('Downloading %s', url)
+    logger.info("Downloading %s", url)
     urllib.request.urlretrieve(url, dest)
 
 
 def _calc_sha256sum(filepath: str) -> str:
-    with open(filepath, 'rb') as fd:
+    with open(filepath, "rb") as fd:
         digest = hashlib.sha256()
         while True:
             buf = fd.read(4096)
@@ -137,26 +134,36 @@ def _calc_sha256sum(filepath: str) -> str:
 
 
 def _check_compatibility(filename: str, desired_pyver: str) -> bool:
-    pyver, abi = '', ''
-    match  = WHEEL_FILE_RE.search(filename)
+    match = WHEEL_FILE_RE.search(filename)
 
     if match:
-        pyver = match.group('pyver')
-        abi = match.group('abi')
+        pyver = match.group("pyver")
+        abi = match.group("abi")
     else:
-        raise PyBazelRuleGeneratorException("Could not get Python version information from wheel file: {}".format(filename))
+        raise PyBazelRuleGeneratorException(
+            "Could not get Python version information from wheel file: {}".format(
+                filename
+            )
+        )
 
-    supported_abis = ['abi3', 'cp{}m'.format(desired_pyver), 'cp{}mu'.format(desired_pyver)]
-    always_supported_pyvers = ['cp{}'.format(desired_pyver), 'py{}'.format(desired_pyver)]
+    supported_abis = [
+        "abi3",
+        "cp{}m".format(desired_pyver),
+        "cp{}mu".format(desired_pyver),
+    ]
+    always_supported_pyvers = [
+        "cp{}".format(desired_pyver),
+        "py{}".format(desired_pyver),
+    ]
 
-    if abi == 'none' and pyver in SUPPORTED_PYTHON3_VERSIONS:
+    if abi == "none" and pyver in SUPPORTED_PYTHON3_VERSIONS:
         return True
     elif abi in supported_abis and pyver in CPYTHON_VERSIONS:
         return True
     elif pyver in always_supported_pyvers:
         return True
     else:
-        logger.info('Skipping, version: %s, abi: %s', pyver, abi)
+        logger.info("Skipping, version: %s, abi: %s", pyver, abi)
     return False
 
 
@@ -173,15 +180,15 @@ class WheelInfo:
         self.filename = os.path.basename(filepath)
 
     def __repr__(self):
-        return '<{} ({})>'.format(self.filename, self.platform)
+        return "<{} ({})>".format(self.filename, self.platform)
 
     @property
     def platform(self) -> str:
-        if 'linux' in self.filename:
-            return 'linux'
-        elif 'macos' in self.filename:
-            return 'macos'
-        return 'purelib'
+        if "linux" in self.filename:
+            return "linux"
+        elif "macos" in self.filename:
+            return "macos"
+        return "purelib"
 
     def __eq__(self, other):
         return isinstance(other, WheelInfo) and (self.filename == other.filename)
@@ -193,25 +200,25 @@ class WheelInfo:
     def archive_name(self) -> str:
         """Name of the archive
 
-        Example: 'pypi__futures__3_1_1'
+        Example: 'pypi__futures_3_1_1'
 
         This includes the version so that Bazel graph shows it.
 
         The naming convention matches:
             https://github.com/bazelbuild/rules_python#canonical-whl_library-naming
         """
-        version_label = self.version.replace('.', '_')
-        if self.platform != 'purelib':
-            return 'pypi__{}_{}__{}'.format(self.name, version_label, self.platform)
-        return 'pypi__{}_{}'.format(self.name, version_label)
+        version_label = self.version.replace(".", "_")
+        if self.platform != "purelib":
+            return "pypi__{}_{}__{}".format(self.name, version_label, self.platform)
+        return "pypi__{}_{}".format(self.name, version_label)
 
     @property
     def lib_path(self) -> str:
         """Path of the lib inside the archive
 
-        Example: '@pypi__futures__3_1_1//:pkg
+        Example: '@pypi__futures_3_1_1//:pkg
         """
-        return '@{}//:pkg'.format(self.archive_name)
+        return "@{}//:pkg".format(self.archive_name)
 
 
 class DependencyInfo:
@@ -223,22 +230,22 @@ class DependencyInfo:
     """
 
     def __init__(self, name, deps, extras):
-        self.name = name.replace('-', '_').lower()
+        self.name = name.replace("-", "_").lower()
         self._deps = deps  # subdependencies
-        self._extras = extras  # TODO(Christian): implement, don't care about it right now
+        self._extras = (
+            extras
+        )  # TODO(c4urself): implement, don't care about it right now
 
         self.wheels = []
 
     @property
     def dependencies(self):
-        return sorted([
-            dep.replace('-', '_').lower() for dep in self._deps
-        ])
+        return sorted([dep.replace("-", "_").lower() for dep in self._deps])
 
     def verify(self, platforms: typing.Set) -> bool:
         """Verify that this dependency has the necessary wheels."""
         if len(self.wheels) == 1:
-            if self.wheels[0].platform == 'purelib':
+            if self.wheels[0].platform == "purelib":
                 return True
         existing_platforms = {w.platform for w in self.wheels}
         return platforms == existing_platforms
@@ -246,14 +253,18 @@ class DependencyInfo:
     def add_wheel(self, wheel: WheelInfo) -> None:
         if self.wheels:
             existing_platforms = {w.platform for w in self.wheels}
-            if 'purelib' in existing_platforms:
-                logger.info('Not adding any more wheels, purelib library')
+            if "purelib" in existing_platforms:
+                logger.info("Not adding any more wheels, purelib library")
                 return
             elif wheel.platform in existing_platforms:
-                logger.info('Not adding an alternative for platform: %s', wheel.platform)
+                logger.info(
+                    "Not adding an alternative for platform: %s", wheel.platform
+                )
                 return
-            elif wheel.platform == 'purelib':
-                logger.info('Removing existing platform wheels, preferring a purelib variant.')
+            elif wheel.platform == "purelib":
+                logger.info(
+                    "Removing existing platform wheels, preferring a purelib variant."
+                )
                 # weird edge case: we found a wheel that has both platform-specific and
                 # purelib variants, let's prefer the purelib wheel
                 self.wheels = []
@@ -272,36 +283,52 @@ class DependencyInfo:
 class RequirementsToBazelLibGenerator:
     """Generator for creating Bazel rules from a requirements-file"""
 
-    def __init__(self, requirements_path: str, wheel_dir: str, output_file: str, bzl_path: str, desired_python: str):
+    def __init__(
+        self,
+        requirements_path: str,
+        wheel_dir: str,
+        output_file: str,
+        bzl_path: str,
+        desired_python: str,
+    ):
         self.requirements_path = requirements_path
         self.wheel_dir = wheel_dir
         self.output_file = output_file
         self.bzl_path = bzl_path
         self.desired_python = desired_python
-        self.desired_python_full = 'python{}'.format('.'.join(self.desired_python))
+        self.desired_python_full = "python{}".format(".".join(self.desired_python))
 
     def run(self) -> None:
         """Main entrypoint into builder."""
+        logger.info("Validating")
         self._validate()
-        logger.info('Getting wheel links via pip')
+        logger.info("Getting wheel links via pip")
         wheel_links = self._get_wheel_links()
-        logger.info('\nParsing dependencies from wheels\n')
+        logger.info("\nParsing dependencies from wheels\n")
         deps = self._parse_wheel_dependencies(wheel_links)
-        logger.info('\nGenerating output file\n')
+        logger.info("\nGenerating output file\n")
         self._gen_output_file(deps)
 
     def _validate(self) -> None:
-        with open(self.requirements_path, 'rb') as f:
-            if '--use-wheel' in f.readlines():
-                raise PyBazelRuleGeneratorException("Requirements.txt may not contain --use-wheel")
+        with open(self.requirements_path, "rt") as f:
+            if "--use-wheel\n" in f.readlines():
+                raise PyBazelRuleGeneratorException(
+                    "Requirements.txt may not contain --use-wheel"
+                )
         whl_path = pathlib.Path(self.wheel_dir)
 
         if not whl_path.parent.exists():
-            raise PyBazelRuleGeneratorException("Wheel dir parent directory '{}' does not exist".format(whl_path.parent))
+            raise PyBazelRuleGeneratorException(
+                "Wheel dir parent directory '{}' does not exist".format(whl_path.parent)
+            )
 
         output_path = pathlib.Path(self.output_file)
         if not output_path.parent.exists():
-            raise PyBazelRuleGeneratorException("Output path parent directory '{}' does not exist".format(output_path.parent))
+            raise PyBazelRuleGeneratorException(
+                "Output path parent directory '{}' does not exist".format(
+                    output_path.parent
+                )
+            )
 
     def _get_wheelname_from_link(self, wheel_link: str) -> str:
         """Give a wheel url, return the filename.
@@ -309,21 +336,23 @@ class RequirementsToBazelLibGenerator:
         >>> _get_wheelname_from_link('https://foo/__packages/idna_ssl-1.1.0-py3-none-any.whl')
         "idna_ssl-1.1.0-py3-none-any.whl"
         """
-        logger.debug('getting filename for %s', wheel_link)
+        logger.debug("getting filename for %s", wheel_link)
         match = WHEEL_FILENAME_RE.search(wheel_link)
         if match:
-            return match.group('filename')
+            return match.group("filename")
         else:
-            return ''
+            return ""
 
     def _get_wheel_links(self) -> dict:
         wheel_links = {}
-        logger.info('Calling pip wheel on: %s', self.requirements_path)
+        logger.info("Calling pip wheel on: %s", self.requirements_path)
         start = time.time()
         proc = subprocess.Popen(
             shlex.split(
-                '{} -m pip wheel --verbose --disable-pip-version-check '
-                '--requirement {} --wheel-dir {}'.format(self.desired_python_full, self.requirements_path, self.wheel_dir)
+                "{} -m pip wheel --verbose --disable-pip-version-check "
+                "--requirement {} --wheel-dir {}".format(
+                    self.desired_python_full, self.requirements_path, self.wheel_dir
+                )
             ),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -331,19 +360,21 @@ class RequirementsToBazelLibGenerator:
         )
         out, err = proc.communicate()
         if proc.returncode != 0:
-            raise PyBazelRuleGeneratorException("Pip call caused an error: {}".format(err))
+            raise PyBazelRuleGeneratorException(
+                "Pip call caused an error: {}".format(err)
+            )
         for line in out.splitlines():
             match = WHEEL_LINK_RE.search(line)
             if match:
                 # get filename from link and then add to a lookup dict
                 # to store the location of the http links for wheels
-                link = match.group('link')
+                link = match.group("link")
                 filename = self._get_wheelname_from_link(link)
-                logger.debug('Found link: %s for: %s', link, filename)
+                logger.debug("Found link: %s for: %s", link, filename)
                 wheel_links[filename] = link
         end = time.time()
-        logger.info('pip executed in %s', (end - start) * 1000.0)
-        logger.debug('found: %r', wheel_links)
+        logger.info("pip executed in %s seconds", (end - start) * 1000.0)
+        logger.debug("found: %r", wheel_links)
         return wheel_links
 
     def _parse_wheel_dependencies(self, wheel_links: str) -> typing.Set[DependencyInfo]:
@@ -367,7 +398,7 @@ class RequirementsToBazelLibGenerator:
         # at this point pip has installed all deps+subdeps inside our
         # wheel_dir, even though we're dealing with wheel files, we are
         # really iterating through our full dependency set
-        for wheel_filepath in glob.glob('{}/*.whl'.format(self.wheel_dir)):
+        for wheel_filepath in glob.glob("{}/*.whl".format(self.wheel_dir)):
             logger.info("\nProcessing wheelinfo for %s", wheel_filepath)
             wheel = Wheel(wheel_filepath)
             extra_deps = {}
@@ -376,7 +407,9 @@ class RequirementsToBazelLibGenerator:
 
             logger.debug("Wheel name is: %s", wheel.name())
             dependency = DependencyInfo(
-                name=wheel.name(), deps=set(wheel.dependencies()) - BLACKLIST, extras=extra_deps,
+                name=wheel.name(),
+                deps=set(wheel.dependencies()) - BLACKLIST,
+                extras=extra_deps,
             )
 
             wheel_filename = os.path.basename(wheel_filepath)
@@ -386,12 +419,13 @@ class RequirementsToBazelLibGenerator:
             # that we got from the pip call
             match = WHEEL_FILE_RE.search(wheel_filename)
             if match:
-                name, version = match.group('name'), match.group('ver')
-                match_prefix = '{}-{}'.format(name, version)
+                name, version = match.group("name"), match.group("ver")
+                match_prefix = "{}-{}".format(name, version)
             else:
                 raise PyBazelRuleGeneratorException("Could not parse wheel file name.")
             logger.debug(
-                "Will find additional wheels for other platforms using prefix: %s", match_prefix
+                "Will find additional wheels for other platforms using prefix: %s",
+                match_prefix,
             )
             for additional_filename, additional_link in wheel_links.items():
                 if additional_filename.startswith(match_prefix):
@@ -400,28 +434,39 @@ class RequirementsToBazelLibGenerator:
                     # so we check for that first.
                     logger.info("Found additional wheel: %s", additional_filename)
 
-                    is_compatible = _check_compatibility(additional_filename, self.desired_python)
+                    is_compatible = _check_compatibility(
+                        additional_filename, self.desired_python
+                    )
                     if not is_compatible:
                         continue
 
-                    filepath = os.path.abspath(os.path.join(self.wheel_dir, additional_filename))
-                    logger.debug('Considering %s', additional_filename)
+                    filepath = os.path.abspath(
+                        os.path.join(self.wheel_dir, additional_filename)
+                    )
+                    logger.debug("Considering %s", additional_filename)
 
                     if wheel_filename != additional_filename:
-                        logger.debug('%s does not equal %s', wheel_filename, additional_filename)
+                        logger.debug(
+                            "%s does not equal %s", wheel_filename, additional_filename
+                        )
                         _download(additional_link, filepath)
 
-                    logger.debug('Matched %s %s', match_prefix, additional_filename)
+                    logger.debug("Matched %s %s", match_prefix, additional_filename)
 
                     wi = WheelInfo(
-                        name=name, filepath=filepath, url=additional_link, version=version,
+                        name=name,
+                        filepath=filepath,
+                        url=additional_link,
+                        version=version,
                     )
 
                     dependency.add_wheel(wi)
 
             if dependency.name not in BLACKLIST:
-                if not dependency.verify({'macos', 'linux'}):
-                    raise PyBazelRuleGeneratorException("Dependency {} is missing wheels!".format(dependency))
+                if not dependency.verify({"macos", "linux"}):
+                    raise PyBazelRuleGeneratorException(
+                        "Dependency {} is missing wheels!".format(dependency)
+                    )
                 all_deps.add(dependency)
         return all_deps
 
@@ -448,67 +493,72 @@ class RequirementsToBazelLibGenerator:
                     type="zip",
                 )
         """
-        f = tempfile.NamedTemporaryFile(delete=False, mode='w+t')
+        f = tempfile.NamedTemporaryFile(delete=False, mode="w+t")
         # sort the deps for better diffs
         sorted_deps = list(deps)
-        sorted_deps.sort(key=operator.attrgetter('name'))
+        sorted_deps.sort(key=operator.attrgetter("name"))
 
         # header
         f.write(HEADER)
-        f.write('\ndef pypi_libraries():\n\n')
+        f.write("\ndef pypi_libraries():\n\n")
 
         # py_libraries
         for dependency in sorted_deps:
-            logger.debug('Writing py_library for %s', dependency)
-            f.write(_space(4) + 'native.py_library(\n')
+            logger.debug("Writing py_library for %s", dependency)
+            f.write(_space(4) + "native.py_library(\n")
             f.write(_space(8) + 'name = "{}",\n'.format(dependency.name))
-            f.write(_space(8) + 'deps = [\n')
+            f.write(_space(8) + "deps = [\n")
             for subdependency in dependency.dependencies:
                 f.write(_space(12) + '"{}",\n'.format(subdependency))
-            f.write(_space(8) + ']')
-            logger.debug('Found %r dependency wheels', dependency.wheels)
+            f.write(_space(8) + "]")
+            logger.debug("Found %r dependency wheels", dependency.wheels)
             if len(dependency.wheels) == 0:
                 # TODO(c4urself): weird case, investigate
-                raise PyBazelRuleGeneratorException("No wheels for dependency: {}".format(dependency))
+                raise PyBazelRuleGeneratorException(
+                    "No wheels for dependency: {}".format(dependency)
+                )
             if len(dependency.wheels) == 1:
                 # one platform-less/purelib wheel exists
                 f.write(' + ["{}"],\n'.format(dependency.wheels[0].lib_path))
             else:
                 # multiple platform/platlib wheels exist
-                f.write(' + select({\n')
+                f.write(" + select({\n")
                 sorted_wheels = dependency.wheels
-                sorted_wheels.sort(key=operator.attrgetter('platform'))
+                sorted_wheels.sort(key=operator.attrgetter("platform"))
                 for wheel in sorted_wheels:
-                    if wheel.platform == 'linux':
+                    if wheel.platform == "linux":
                         f.write(
-                            _space(12) + '"@//tool_bazel:linux": ["{}"],\n'.format(wheel.lib_path)
+                            _space(12)
+                            + '"@//tool_bazel:linux": ["{}"],\n'.format(wheel.lib_path)
                         )
-                    elif wheel.platform == 'macos':
+                    elif wheel.platform == "macos":
                         f.write(
-                            _space(12) +
-                            '"@//tool_bazel:macos": ["{}"],\n'.format(wheel.lib_path)
+                            _space(12)
+                            + '"@//tool_bazel:macos": ["{}"],\n'.format(wheel.lib_path)
                         )
-                f.write(_space(8) + '}),\n')
+                f.write(_space(8) + "}),\n")
             f.write(_space(8) + 'visibility=["//visibility:public"],\n')
-            f.write(_space(4) + ')\n\n')
+            f.write(_space(4) + ")\n\n")
 
-        f.write('\n\ndef pypi_archives():\n')
-        f.write(_space(4) + 'existing_rules = native.existing_rules()')
+        f.write("\n\ndef pypi_archives():\n")
+        f.write(_space(4) + "existing_rules = native.existing_rules()")
 
         # archives
         for dependency in sorted_deps:
             sorted_wheels = dependency.wheels
-            sorted_wheels.sort(key=operator.attrgetter('platform'))
+            sorted_wheels.sort(key=operator.attrgetter("platform"))
             for wheel in sorted_wheels:
                 f.write(
                     ARCHIVE_TMPL.format(
-                        archive_name=wheel.archive_name, url=wheel.url, sha256=wheel.sha256sum
+                        archive_name=wheel.archive_name,
+                        url=wheel.url,
+                        sha256=wheel.sha256sum,
                     )
                 )
 
         # footer
         f.write(FOOTER.format(self.bzl_path))
-        logger.info('Finished writing to output file: %s', self.output_file)
+        logger.info("Finished writing to output file: %s", self.output_file)
         f.close()
         shutil.copy(f.name, self.output_file)
         os.remove(f.name)

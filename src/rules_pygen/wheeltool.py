@@ -37,26 +37,26 @@ logger = logging.getLogger(__name__)
 
 
 def recurse_split_extra(parsed_parts):
-    extra = ''
+    extra = ""
     remaining = []
 
     for part in parsed_parts:
         if isinstance(part, list):
             # parenthesized expressions are lists
             sub_extra, sub_remaining = recurse_split_extra(part)
-            if sub_extra != '':
-                assert extra == ''
+            if sub_extra != "":
+                assert extra == ""
                 extra = sub_extra
             remaining.append(sub_remaining)
         elif isinstance(part, tuple):
-            if isinstance(part[0], markers.Variable) and part[0].value == 'extra':
+            if isinstance(part[0], markers.Variable) and part[0].value == "extra":
                 # Found the extra part: parse it and skip it
                 op = part[1]
                 value = part[2]
-                assert isinstance(op, markers.Op) and op.value == '=='
+                assert isinstance(op, markers.Op) and op.value == "=="
                 assert isinstance(value, markers.Value)
                 assert len(value.value) > 0
-                assert extra == ''
+                assert extra == ""
                 extra = value.value
 
                 # if the previous item is now a dangling boolean operator: trim it
@@ -68,7 +68,7 @@ def recurse_split_extra(parsed_parts):
             # must be an operator: just append it
             remaining.append(part)
         else:
-            raise Exception('unhandled part: ' + repr(part))
+            raise Exception("unhandled part: " + repr(part))
 
     # if the first item is a dangling boolean operator: trim it
     if len(remaining) > 0 and isinstance(remaining[0], str):
@@ -77,24 +77,24 @@ def recurse_split_extra(parsed_parts):
 
 
 def recurse_str(parsed_parts):
-    out = ''
+    out = ""
     for part in parsed_parts:
         if isinstance(part, list):
-            out += '(' + recurse_str(part) + ')'
+            out += "(" + recurse_str(part) + ")"
         elif isinstance(part, tuple):
-            out += ' '.join(p.serialize() for p in part)
+            out += " ".join(p.serialize() for p in part)
         elif isinstance(part, str):
-            out += ' ' + part + ' '
+            out += " " + part + " "
         else:
-            raise Exception('unhandled part: ' + repr(part))
+            raise Exception("unhandled part: " + repr(part))
     return out
 
 
 def split_extra_from_environment_marker(environment_marker):
-    '''
+    """
     Splits an environment marker into (extra, remaining environment). It parses the expression,
     then finds the "extra==X" clause. That clause is removed, and the expression is serialized.
-    '''
+    """
 
     marker = markers.Marker(environment_marker)
     extra, remaining = recurse_split_extra(marker._markers)
@@ -106,7 +106,6 @@ def split_extra_from_environment_marker(environment_marker):
 
 
 class Wheel(object):
-
     def __init__(self, path):
         self._path = path
 
@@ -118,43 +117,43 @@ class Wheel(object):
 
     def distribution(self):
         # See https://www.python.org/dev/peps/pep-0427/#file-name-convention
-        parts = self.basename().split('-')
+        parts = self.basename().split("-")
         return parts[0]
 
     def version(self):
         # See https://www.python.org/dev/peps/pep-0427/#file-name-convention
-        parts = self.basename().split('-')
+        parts = self.basename().split("-")
         return parts[1]
 
     def repository_name(self):
         # Returns the canonical name of the Bazel repository for this package.
-        canonical = 'pypi__{}_{}'.format(self.distribution(), self.version())
+        canonical = "pypi__{}_{}".format(self.distribution(), self.version())
         # Escape any illegal characters with underscore.
-        return re.sub('[-.+]', '_', canonical)
+        return re.sub("[-.+]", "_", canonical)
 
     def _dist_info(self):
         # Return the name of the dist-info directory within the .whl file.
         # e.g. google_cloud-0.27.0-py2.py3-none-any.whl ->
         #      google_cloud-0.27.0.dist-info
-        return '{}-{}.dist-info'.format(self.distribution(), self.version())
+        return "{}-{}.dist-info".format(self.distribution(), self.version())
 
     def metadata(self):
         # Extract the structured data from metadata.json in the WHL's dist-info
         # directory.
-        with zipfile.ZipFile(self.path(), 'r') as whl:
+        with zipfile.ZipFile(self.path(), "r") as whl:
             # first check for metadata.json
             try:
-                with whl.open(self._dist_info() + '/metadata.json') as f:
+                with whl.open(self._dist_info() + "/metadata.json") as f:
                     return json.loads(f.read().decode("utf-8"))
 
             except KeyError:
                 pass
             # fall back to METADATA file (https://www.python.org/dev/peps/pep-0427/)
-            with whl.open(self._dist_info() + '/METADATA') as f:
+            with whl.open(self._dist_info() + "/METADATA") as f:
                 return self._parse_metadata(f)
 
     def name(self):
-        return self.metadata().get('name')
+        return self.metadata().get("name")
 
     def dependencies(self, extra=None):
         """Access the dependencies of this Wheel.
@@ -167,27 +166,27 @@ class Wheel(object):
         the names of requirements from the metadata.json
         """
         # TODO(mattmoor): Is there a schema to follow for this?
-        run_requires = self.metadata().get('run_requires', [])
+        run_requires = self.metadata().get("run_requires", [])
         for requirement in run_requires:
-            if requirement.get('extra') != extra:
+            if requirement.get("extra") != extra:
                 # Match the requirements for the extra we're looking for.
                 continue
-            marker = requirement.get('environment')
+            marker = requirement.get("environment")
             if marker and not pkg_resources.evaluate_marker(marker):
                 # The current environment does not match the provided PEP 508 marker,
                 # so ignore this requirement.
                 continue
-            requires = requirement.get('requires', [])
+            requires = requirement.get("requires", [])
             for entry in requires:
                 # Strip off any trailing versioning data.
-                parts = re.split('[ ><=()]', entry)
+                parts = re.split("[ ><=()]", entry)
                 yield parts[0]
 
     def extras(self):
-        return self.metadata().get('extras', [])
+        return self.metadata().get("extras", [])
 
     def expand(self, directory):
-        with zipfile.ZipFile(self.path(), 'r') as whl:
+        with zipfile.ZipFile(self.path(), "r") as whl:
             whl.extractall(directory)
 
     # _parse_metadata parses METADATA files according to https://www.python.org/dev/peps/pep-0566/
@@ -200,19 +199,21 @@ class Wheel(object):
         # https://packaging.python.org/specifications/core-metadata/#requires-dist-multiple-use
         requires_extra = {}
         extras = set()
-        requires = message.get_all('Requires-Dist') or []
+        requires = message.get_all("Requires-Dist") or []
         for specification in requires:
             package_and_version = specification
-            environment_marker = ''
-            extra = ''
-            if ';' in specification:
-                parts = specification.split(';', 2)
+            environment_marker = ""
+            extra = ""
+            if ";" in specification:
+                parts = specification.split(";", 2)
                 package_and_version = parts[0].strip()
                 environment_marker = parts[1].strip()
 
-                extra, environment_marker = split_extra_from_environment_marker(environment_marker)
+                extra, environment_marker = split_extra_from_environment_marker(
+                    environment_marker
+                )
 
-            if extra != '':
+            if extra != "":
                 extras.add(extra)
 
             key = (extra, environment_marker)
@@ -223,25 +224,25 @@ class Wheel(object):
         run_requires = []
 
         for (extra, environment_marker), requires in requires_extra.items():
-            value = {'requires': requires}
+            value = {"requires": requires}
             if extra:
-                value['extra'] = extra
+                value["extra"] = extra
             if environment_marker:
-                value['environment'] = environment_marker
+                value["environment"] = environment_marker
             run_requires.append(value)
 
         data = {
-            'name': message['Name'],
-            'version': message['Version'],
-            'run_requires': run_requires,
-            'extras': list(extras),
+            "name": message["Name"],
+            "version": message["Version"],
+            "run_requires": run_requires,
+            "extras": list(extras),
         }
         return data
 
 
 def main():
     if len(sys.argv) != 2:
-        sys.stderr.write('Usage: wheeltool.py (input wheel)\n')
+        sys.stderr.write("Usage: wheeltool.py (input wheel)\n")
         sys.exit(1)
     wheel = Wheel(sys.argv[1])
 
@@ -249,12 +250,9 @@ def main():
     for extra in wheel.extras():
         extra_deps[extra] = list(wheel.dependencies(extra=extra))
 
-    output = dict(
-        requires=list(wheel.dependencies()),
-        extras=extra_deps,
-    )
-    sys.stdout.write(json.dumps(output) + '\n')
+    output = dict(requires=list(wheel.dependencies()), extras=extra_deps)
+    sys.stdout.write(json.dumps(output) + "\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
