@@ -19,6 +19,35 @@ import unittest.mock
 
 
 class WhenGeneratingBuildFilesTest(unittest.TestCase):
+
+    def test_that_log_lines_for_additional_links_works(self):
+        """
+        We rely on logging from pip to show which wheels exist in the repo, the log line
+        is emitted here: https://github.com/pypa/pip/blob/master/src/pip/_internal/index/package_finder.py#L745
+        but unfortunately changes from time to time...
+        """
+        from rules_pygen.rules_generator import WHEEL_LINK_RE
+        pip19skip = """Skipping link: none of the wheel's tags match: cp27-none-macosx_10_10_intel: https://pypi.tubularlabs.net/__packages/cffi-0.8.6-cp27-none-macosx_10_10_intel.whl#md5=4ddb6f10863ee4fee8d37ed4be8b8d26 (from https://pypi.tubularlabs.net/cffi/)"""
+        pip18skip = """Skipping link https://pypi.tubularlabs.net/__packages/cffi-1.11.5-cp35-cp35m-manylinux1_x86_64.whl#md5=e0c83a8bb0f7a0bd9d58bf9bdf33bbcc (from https://pypi.tubularlabs.net/cffi/); it is not compatible with this Python"""
+
+        https_found = """Found link https://pypi.tubularlabs.net/__packages/aiohttp_admin-0.0.1-py2.py3-none-any.whl#md5=e2ca60e687b17302de3a444bb17fd82b (from https://pypi.tubularlabs.net/aiohttp-admin/), version: 0.0.1"""
+        plain_http = """Found link http://pypi.tubularlabs.net/__packages/aiohttp_admin-0.0.1-py2.py3-none-any.whl#md5=e2ca60e687b17302de3a444bb17fd82b (from http://pypi.tubularlabs.net/aiohttp-admin/), version: 0.0.1"""
+
+        self.assertTrue(WHEEL_LINK_RE.search(pip19skip))
+        self.assertTrue(WHEEL_LINK_RE.search(pip18skip))
+
+        match = WHEEL_LINK_RE.search(pip19skip)
+        self.assertEqual(match.group('link'), 'https://pypi.tubularlabs.net/__packages/cffi-0.8.6-cp27-none-macosx_10_10_intel.whl')
+
+        match = WHEEL_LINK_RE.search(pip18skip)
+        self.assertEqual(match.group('link'), 'https://pypi.tubularlabs.net/__packages/cffi-1.11.5-cp35-cp35m-manylinux1_x86_64.whl')
+
+        match = WHEEL_LINK_RE.search(https_found)
+        self.assertEqual(match.group('link'), 'https://pypi.tubularlabs.net/__packages/aiohttp_admin-0.0.1-py2.py3-none-any.whl')
+
+        match = WHEEL_LINK_RE.search(plain_http)
+        self.assertEqual(match.group('link'), 'http://pypi.tubularlabs.net/__packages/aiohttp_admin-0.0.1-py2.py3-none-any.whl')
+
     def test_that_wheel_compatibility_is_correct(self):
         from rules_pygen.rules_generator import _check_compatibility
 
@@ -118,6 +147,24 @@ class WhenGeneratingBuildFilesTest(unittest.TestCase):
         pure_di.add_wheel(wi4)  # should remove the first one, purelib takes precedence
         self.assertEqual(len(pure_di.wheels), 1)
         self.assertEqual(pure_di.wheels, [wi4])
+
+    @unittest.mock.patch('rules_pygen.rules_generator._calc_sha256sum')
+    def test_that_we_dont_add_multiple_purelib_wheels2(self, mock_checksum):
+        from rules_pygen.rules_generator import WheelInfo, DependencyInfo
+
+        di = DependencyInfo('aiohttp-admin', [], [])
+        wi1 = WheelInfo(
+            '/path/to/aiohttp_admin-0.0.1-py3-none-any.whl', 'https://example.org', 'aiohttp-admin', '0.0.1'
+        )
+        wi2 = WheelInfo(
+            '/path/to/aiohttp_admin-0.0.1-py2.py3-none-any.whl', 'https://example.org', 'aiohttp-admin', '0.0.1'
+        )
+
+        di.add_wheel(wi1)
+        self.assertEqual(len(di.wheels), 1)
+
+        di.add_wheel(wi2)
+        self.assertEqual(len(di.wheels), 1)
 
     def test_that_subdeps_are_correct(self):
         from rules_pygen.rules_generator import DependencyInfo

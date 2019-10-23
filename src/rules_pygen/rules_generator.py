@@ -81,7 +81,7 @@ def requirement(name):
 # this matches *.whl files in log lines, note that PyPI can also contain
 # tar.gz files (not everything is a wheel) and so this script should deal
 # with those as well
-WHEEL_LINK_RE = re.compile(r"^\s*(Found|Skipping) link (?P<link>http[^ #]+\.whl)")
+WHEEL_LINK_RE = re.compile(r"^\s*(Found|Skipping) link.*(?P<link>https?:[^ #]+\.whl)")
 
 WHEEL_FILENAME_RE = re.compile(r"^.*/(?P<filename>[^\/]*.whl)$")
 
@@ -244,11 +244,17 @@ class DependencyInfo:
 
     def verify(self, platforms: typing.Set) -> bool:
         """Verify that this dependency has the necessary wheels."""
-        if len(self.wheels) == 1:
+        if len(self.wheels) == 1:  # add_wheel ensures only one purelib
             if self.wheels[0].platform == "purelib":
                 return True
         existing_platforms = {w.platform for w in self.wheels}
-        return platforms == existing_platforms
+        if platforms == existing_platforms:
+            return True
+        else:
+            logger.error(
+                'Verification shows missing platform(s): %s', platforms - existing_platforms
+            )
+            return False
 
     def add_wheel(self, wheel: WheelInfo) -> None:
         if self.wheels:
