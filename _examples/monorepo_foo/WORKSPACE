@@ -1,6 +1,11 @@
 # Load the generator, so it can be used locally
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
+    name = "rules_python",
+    remote = "https://github.com/bazelbuild/rules_python.git",
+    commit = "4b84ad270387a7c439ebdccfd530e2339601ef27",  # (2019-08-02 or later)
+)
+git_repository(
     name = "rules_pygen",
     remote = "https://github.com/tubular/rules_pygen.git",
     commit = "201b1529b2a1b689b8ddd29e95504605d956e070"

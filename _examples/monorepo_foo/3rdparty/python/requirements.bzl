@@ -3,10 +3,11 @@
 # Generated with https://github.com/tubular/rules_pygen
 #
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@rules_python//python:defs.bzl", "py_library")
 
 _BUILD_FILE_CONTENT='''
 
-native.py_library(
+py_library(
     name = "pkg",
     srcs = glob(["**/*.py"]),
     data = glob(["**/*"], exclude=[
@@ -19,21 +20,21 @@ native.py_library(
 
 def pypi_libraries():
 
-    native.py_library(
+    py_library(
         name = "asynctest",
         deps = [
         ] + ["@pypi__asynctest_0_11_1//:pkg"],
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "coolname",
         deps = [
         ] + ["@pypi__coolname_1_1_0//:pkg"],
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "freezegun",
         deps = [
             "python_dateutil",
@@ -42,7 +43,7 @@ def pypi_libraries():
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "mock",
         deps = [
             "pbr",
@@ -51,21 +52,21 @@ def pypi_libraries():
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "pbr",
         deps = [
-        ] + ["@pypi__pbr_5_4_2//:pkg"],
+        ] + ["@pypi__pbr_5_4_3//:pkg"],
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "py",
         deps = [
         ] + ["@pypi__py_1_8_0//:pkg"],
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "pytest",
         deps = [
             "py",
@@ -73,22 +74,22 @@ def pypi_libraries():
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "python_dateutil",
         deps = [
             "six",
-        ] + ["@pypi__python_dateutil_2_8_0//:pkg"],
+        ] + ["@pypi__python_dateutil_2_8_1//:pkg"],
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "six",
         deps = [
-        ] + ["@pypi__six_1_12_0//:pkg"],
+        ] + ["@pypi__six_1_13_0//:pkg"],
         visibility=["//visibility:public"],
     )
 
-    native.py_library(
+    py_library(
         name = "testfixtures",
         deps = [
         ] + ["@pypi__testfixtures_4_3_3//:pkg"],
@@ -135,11 +136,11 @@ def pypi_archives():
             type = "zip",
         )
 
-    if "pypi__pbr_5_4_2" not in existing_rules:
+    if "pypi__pbr_5_4_3" not in existing_rules:
         http_archive(
-            name = "pypi__pbr_5_4_2",
-            urls = ["https://files.pythonhosted.org/packages/f9/d8/bd657bfa0e89eb71ad5e977ed99a9bb2b44e5db68d9190970637c26501bb/pbr-5.4.2-py2.py3-none-any.whl"],
-            sha256 = "56e52299170b9492513c64be44736d27a512fa7e606f21942160b68ce510b4bc",
+            name = "pypi__pbr_5_4_3",
+            urls = ["https://files.pythonhosted.org/packages/46/a4/d5c83831a3452713e4b4f126149bc4fbda170f7cb16a86a00ce57ce0e9ad/pbr-5.4.3-py2.py3-none-any.whl"],
+            sha256 = "b32c8ccaac7b1a20c0ce00ce317642e6cf231cf038f9875e0280e28af5bf7ac9",
             build_file_content = _BUILD_FILE_CONTENT,
             type = "zip",
         )
@@ -162,20 +163,20 @@ def pypi_archives():
             type = "zip",
         )
 
-    if "pypi__python_dateutil_2_8_0" not in existing_rules:
+    if "pypi__python_dateutil_2_8_1" not in existing_rules:
         http_archive(
-            name = "pypi__python_dateutil_2_8_0",
-            urls = ["https://files.pythonhosted.org/packages/41/17/c62faccbfbd163c7f57f3844689e3a78bae1f403648a6afb1d0866d87fbb/python_dateutil-2.8.0-py2.py3-none-any.whl"],
-            sha256 = "7e6584c74aeed623791615e26efd690f29817a27c73085b78e4bad02493df2fb",
+            name = "pypi__python_dateutil_2_8_1",
+            urls = ["https://files.pythonhosted.org/packages/d4/70/d60450c3dd48ef87586924207ae8907090de0b306af2bce5d134d78615cb/python_dateutil-2.8.1-py2.py3-none-any.whl"],
+            sha256 = "75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a",
             build_file_content = _BUILD_FILE_CONTENT,
             type = "zip",
         )
 
-    if "pypi__six_1_12_0" not in existing_rules:
+    if "pypi__six_1_13_0" not in existing_rules:
         http_archive(
-            name = "pypi__six_1_12_0",
-            urls = ["https://files.pythonhosted.org/packages/73/fb/00a976f728d0d1fecfe898238ce23f502a721c0ac0ecfedb80e0d88c64e9/six-1.12.0-py2.py3-none-any.whl"],
-            sha256 = "3350809f0555b11f552448330d0b52d5f24c91a322ea4a15ef22629740f3761c",
+            name = "pypi__six_1_13_0",
+            urls = ["https://files.pythonhosted.org/packages/65/26/32b8464df2a97e6dd1b656ed26b2c194606c16fe163c695a992b36c11cdf/six-1.13.0-py2.py3-none-any.whl"],
+            sha256 = "1f1b7d42e254082a9db6279deae68afb421ceba6158efa6131de7b3003ee93fd",
             build_file_content = _BUILD_FILE_CONTENT,
             type = "zip",
         )

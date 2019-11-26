@@ -24,9 +24,15 @@ understands.
 
 ## Usage & Set up
 
-1. Add a `git_repository` rule to your WORKSPACE file to import the generator:
+1. Add a `git_repository` rule to your WORKSPACE file to import the generator and rules_python for py_* rules:
 
 ```
+git_repository(
+    name = "rules_python",
+    remote = "https://github.com/bazelbuild/rules_python.git",
+    commit = "4b84ad270387a7c439ebdccfd530e2339601ef27",  # (2019-08-02 or later)
+)
+
 git_repository(
     name = "rules_pygen",
     remote = "https://github.com/tubular/rules_pygen.git",
@@ -103,6 +109,15 @@ py_library(
 
 ### Running tests
 
+#### Unit
 ```
 bazel run :generator_tests
+```
+
+#### Integration (run example project)
+
+```
+bazel run :generator -- $(pwd)/_examples/monorepo_foo/3rdparty/python/requirements.txt $(pwd)/_examples/monorepo_foo/3rdparty/python/requirements.bzl //3rdparty/python --python=37
+cd _examples/monorepo_foo/
+bazel run //component_a:greet
 ```

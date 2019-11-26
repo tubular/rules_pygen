@@ -39,7 +39,6 @@ import re
 import shlex
 import shutil
 import subprocess
-import sys
 import tempfile
 import time
 import typing
@@ -56,10 +55,11 @@ HEADER = """# AUTO GENERATED. DO NOT EDIT DIRECTLY.
 # Generated with https://github.com/tubular/rules_pygen
 #
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@rules_python//python:defs.bzl", "py_library")
 
 _BUILD_FILE_CONTENT='''
 
-native.py_library(
+py_library(
     name = "pkg",
     srcs = glob(["**/*.py"]),
     data = glob(["**/*"], exclude=[
@@ -511,7 +511,7 @@ class RequirementsToBazelLibGenerator:
         # py_libraries
         for dependency in sorted_deps:
             logger.debug("Writing py_library for %s", dependency)
-            f.write(_space(4) + "native.py_library(\n")
+            f.write(_space(4) + "py_library(\n")
             f.write(_space(8) + 'name = "{}",\n'.format(dependency.name))
             f.write(_space(8) + "deps = [\n")
             for subdependency in dependency.dependencies:
