@@ -137,7 +137,7 @@ def _check_compatibility(filename: str, desired_pyver: str) -> bool:
     match = WHEEL_FILE_RE.search(filename)
 
     if match:
-        pyver = match.group("pyver")
+        pyver = set(match.group("pyver").split('.'))
         abi = match.group("abi")
     else:
         raise PyBazelRuleGeneratorException(
@@ -151,16 +151,16 @@ def _check_compatibility(filename: str, desired_pyver: str) -> bool:
         "cp{}m".format(desired_pyver),
         "cp{}mu".format(desired_pyver),
     ]
-    always_supported_pyvers = [
+    always_supported_pyvers = {
         "cp{}".format(desired_pyver),
         "py{}".format(desired_pyver),
-    ]
+    }
 
-    if abi == "none" and pyver in SUPPORTED_PYTHON3_VERSIONS:
+    if abi == "none" and pyver & set(SUPPORTED_PYTHON3_VERSIONS):
         return True
-    elif abi in supported_abis and pyver in CPYTHON_VERSIONS:
+    elif abi in supported_abis and pyver & set(CPYTHON_VERSIONS):
         return True
-    elif pyver in always_supported_pyvers:
+    elif pyver & always_supported_pyvers:
         return True
     else:
         logger.info("Skipping, version: %s, abi: %s", pyver, abi)
