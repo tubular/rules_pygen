@@ -51,6 +51,10 @@ class WhenGeneratingBuildFilesTest(unittest.TestCase):
     def test_that_wheel_compatibility_is_correct(self):
         from rules_pygen.rules_generator import _check_compatibility
 
+        self.assertTrue(_check_compatibility('pydantic-1.4-py36.py37.py38-none-any.whl', '36'))
+        self.assertTrue(_check_compatibility('pydantic-1.4-py36.py37.py38-none-any.whl', '37'))
+        self.assertTrue(_check_compatibility('pydantic-1.4-py36.py37.py38-none-any.whl', '38'))
+
         self.assertTrue(_check_compatibility('pytest-3.2.3-py2.py3-none-any.whl', '37'))
         self.assertTrue(_check_compatibility('pytest_hidecaptured-0.1.2-py3-none-any.whl', '37'))
         self.assertTrue(_check_compatibility('Paste-2.0.3-py34-none-any.whl', '37'))
