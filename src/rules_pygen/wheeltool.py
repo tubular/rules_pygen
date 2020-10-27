@@ -180,7 +180,15 @@ class Wheel(object):
             for entry in requires:
                 # Strip off any trailing versioning data.
                 parts = re.split("[ ><=()]", entry)
-                yield parts[0]
+                package_name = parts[0]
+                # For some packages Requires-Dist contains extras defined like:
+                # tablib[html,ods,xls,xlsx,yaml] (>=0.14.0)
+                # Since we don't support extras, we should remove that part completely,
+                # otherwise we end up having `py_library.deps` like `tablib[html,ods,xls,xlsx,yaml]`
+                # which isn't a valid bazel dep
+                if package_name.endswith(']'):
+                    package_name = package_name.split('[')[0]
+                yield package_name
 
     def extras(self):
         return self.metadata().get("extras", [])
